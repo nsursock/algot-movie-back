@@ -8,7 +8,7 @@ const movieRouter = require("./routes/movie.routes");
 app.use(express.json());
 app.use(cors());
 app.use(express.static("."), function (req, res, next) {
-  res.header("Access-Control-Allow-Origin", "http://localhost:3000");
+  res.header("Access-Control-Allow-Origin", process.env.FRONTEND_URL);
   res.header(
     "Access-Control-Allow-Headers",
     "Origin, X-Requested-With, Content-Type, Accept"
@@ -21,11 +21,7 @@ app.use("/movies", movieRouter);
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
-prisma
-  .$connect()
-  .then(() =>
-    console.log("Connected to the database:", process.env.DATABASE_URL)
-  );
+prisma.$connect().then(() => console.log("Connected to the database"));
 
 // ORM
 // const mongoose = require("mongoose");
