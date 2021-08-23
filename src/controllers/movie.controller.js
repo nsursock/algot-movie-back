@@ -20,23 +20,42 @@ exports.createRequest = async (req, res) => {
       score: Number(movie.Metascore),
     };
     const result = await prisma.movie.create({ data });
+    res.status(201).json({ message: "Movie correctly added!" });
   } catch (e) {
     console.log("Error", e.message);
     res.status(400).json({ message: e.message });
   }
-
-  res.status(201).json({ message: "Movie correctly added!" });
 };
 
 exports.readRequest = async (req, res) => {
+  const numParams = Object.keys(req.query).length;
+  const numFilters =
+    numParams !== 0 &&
+    (!Array.isArray(req.query.field) ? 1 : req.query.field.length);
+
+  const whereClause =
+    numParams > 0
+      ? numFilters === 1
+        ? {
+            [req.query.field]: {
+              contains: req.query.value,
+            },
+          }
+        : {
+            AND: req.query.field.map((field, i) => {
+              return {
+                [field]: {
+                  contains: req.query.value[i],
+                },
+              };
+            }),
+          }
+      : null;
+
   try {
     const query = {
-      ...(Object.keys(req.query).length !== 0 && {
-        where: {
-          [req.query.field]: {
-            contains: req.query.value,
-          },
-        },
+      ...(numParams !== 0 && {
+        where: whereClause,
       }),
       ...({} && {
         orderBy: {
