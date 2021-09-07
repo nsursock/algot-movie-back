@@ -36,23 +36,85 @@ exports.readRequest = async (req, res) => {
   const whereClause =
     numParams > 0
       ? numFilters === 1
-        ? {
-            [req.query.field]: {
-              contains: req.query.value,
-            },
-          }
+        ? req.query.field !== "search" && req.query.field !== "sort"
+          ? {
+              [req.query.field]: {
+                contains: req.query.value,
+              },
+            }
+          : {
+              OR: [
+                {
+                  name: {
+                    contains: req.query.value,
+                    mode: "insensitive",
+                  },
+                },
+                {
+                  genre: {
+                    contains: req.query.value,
+                    mode: "insensitive",
+                  },
+                },
+                {
+                  actors: {
+                    contains: req.query.value,
+                    mode: "insensitive",
+                  },
+                },
+                {
+                  director: {
+                    contains: req.query.value,
+                    mode: "insensitive",
+                  },
+                },
+              ],
+            }
         : {
             AND: req.query.field.map((field, i) => {
-              return {
-                [field]: {
-                  contains: req.query.value[i],
-                },
-              };
+              if (field !== "search" && field !== "sort")
+                return {
+                  [field]: {
+                    contains: req.query.value[i],
+                  },
+                };
+              else
+                return {
+                  OR: [
+                    {
+                      name: {
+                        contains: req.query.value[i],
+                        mode: "insensitive",
+                      },
+                    },
+                    {
+                      genre: {
+                        contains: req.query.value[i],
+                        mode: "insensitive",
+                      },
+                    },
+                    {
+                      actors: {
+                        contains: req.query.value[i],
+                        mode: "insensitive",
+                      },
+                    },
+                    {
+                      director: {
+                        contains: req.query.value[i],
+                        mode: "insensitive",
+                      },
+                    },
+                  ],
+                };
             }),
           }
       : null;
 
   try {
+    // const isSortedByName =
+    //   req.query.field[req.query.field.length - 1] === "sort";
+    // req.query.field.find((param) => param === "sort") !== null;
     const query = {
       ...(numParams !== 0 && {
         where: whereClause,
@@ -63,6 +125,7 @@ exports.readRequest = async (req, res) => {
         },
       }),
     };
+    // console.log(JSON.stringify(query, null, 4));
     const movies = await prisma.movie.findMany(query);
     res.status(200).json(movies);
   } catch (e) {
